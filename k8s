@@ -1,0 +1,16 @@
+apt-transport-https
+ca-certificates
+curl
+gnupg
+lsb-release
+iptables
+arptables
+ebtables
+conntrack
+socat
+git
+vim
+htop
+net-tools
+ssh
+docker.io

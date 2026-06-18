@@ -1,0 +1,38 @@
+#!/bin/sh
+
+set -e
+
+# Update apt and install dependencies
+apt-get update
+apt-get install -y apt-transport-https ca-certificates curl gnupg
+
+# Add Kubernetes GPG key and repository
+mkdir -p -m 755 /etc/apt/keyrings
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /' | tee /etc/apt/sources.list.d/kubernetes.list
+
+# Install Kubernetes components
+apt-get update
+apt-get install -y kubelet kubeadm kubectl
+apt-mark hold kubelet kubeadm kubectl
+
+# Enable Docker and Kubelet
+systemctl enable docker
+systemctl enable kubelet
+
+# Setup sysctl for Kubernetes
+cat <<EOF | tee /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-iptables  = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+net.ipv4.ip_forward                 = 1
+EOF
+
+# Load modules
+cat <<EOF | tee /etc/modules-load.d/k8s.conf
+overlay
+br_netfilter
+EOF
+
+# Pre-pull Kubernetes images to save time during cluster init
+# Note: This might make the ISO larger
+# kubeadm config images pull
